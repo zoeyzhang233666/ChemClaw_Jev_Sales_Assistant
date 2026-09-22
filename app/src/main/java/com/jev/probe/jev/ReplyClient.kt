@@ -41,7 +41,7 @@ class ReplyClient(private val prefs: Prefs) {
             append("不可把上述判断当作已确认价格、库存、资质或产品安全证据。\n")
         }
         val user = knowledgeBlock(relationship, ctx) + decisionBlock +
-            "客户类型/业务背景：\${relationship}\n\n最近对话：\n\${convo}\n\n请给出 3 条候选回复。"
+            "客户类型/业务背景：${relationship}\n\n最近对话：\n${convo}\n\n请给出 3 条候选回复。"
         return parseThree(chat(sys, user, temperature = 0.8))
     }
 
