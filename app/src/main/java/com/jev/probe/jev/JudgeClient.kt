@@ -59,11 +59,17 @@ class JudgeClient(private val prefs: Prefs) {
         snapshot: ChatSnapshot,
         relationship: String,
         candidates: List<String>,
-        ctx: ChatContext? = null
+        ctx: ChatContext? = null,
+        decision: Analysis? = null
     ): List<RankedReply> {
         val questions = JSONObject().put("best_reply",
             JevQuestions.rankQuestion(candidates).getJSONObject("best_reply"))
-        val answers = postDecisions(snapshot, relationship, ctx, questions)
+        val salesContext = if (decision == null) relationship else relationship +
+            " | Jev role=" + (decision.customerRole?.choice ?: "unknown") +
+            " stage=" + (decision.salesStage?.choice ?: "unknown") +
+            " next_action=" + (decision.bestAction?.choice ?: "unknown") +
+            " objection=" + (decision.objection?.choice ?: "none")
+        val answers = postDecisions(snapshot, salesContext, ctx, questions)
         return parseRanked(answers.optJSONObject("best_reply"), candidates)
     }
 
