@@ -164,7 +164,7 @@ class OverlayController(private val ctx: Context) {
         // Header
         val header = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         header.addView(TextView(ctx).apply {
-            text = "Jev 化工销售副驾"; setTextColor(Color.parseColor("#111827")); textSize = 15f
+            text = "芯化和云 · Jev 销售副驾"; setTextColor(Color.parseColor("#111827")); textSize = 15f
             setTypeface(typeface, Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         })
@@ -403,6 +403,16 @@ class OverlayController(private val ctx: Context) {
             views.add(dangerBadge(lvl, it.maxLevel))
             tintBubbleDanger(it.score)
         }
+        a.customerRole?.let { views.add(line("客户角色：${ROLE[it.choice] ?: it.choice}", "#111827", 14f, true)) }
+        a.companyType?.let { views.add(hint("企业性质（未核验）：${COMPANY[it.choice] ?: it.choice}")) }
+        a.salesStage?.let { views.add(line("销售阶段：${STAGE[it.choice] ?: it.choice}", "#374151", 13f)) }
+        a.serviceDirection?.let { views.add(line("服务需求：${DIRECTION[it.choice] ?: it.choice}", "#374151", 13f)) }
+        a.objection?.let {
+            if (it.choice != "none") views.add(line("当前异议：${OBJECTION[it.choice] ?: it.choice}", "#9A3412", 13f))
+        }
+        a.inquiryReadiness?.let {
+            if (it.choice != "not_applicable") views.add(line("询盘状态：${INQUIRY[it.choice] ?: it.choice}", "#374151", 13f))
+        }
         // Intent headline.
         a.trueIntent?.let {
             views.add(line("客户意图：${INTENT[it.choice] ?: it.choice}", "#111827", 15f, true))
@@ -414,7 +424,7 @@ class OverlayController(private val ctx: Context) {
         a.bestAction?.let { bits.add(ACTION[it.choice] ?: it.choice) }
         a.shouldReplyNow?.let { bits.add(if (it >= 0.5) "信息足以具体答复" else "需核实后答复") }
         if (bits.isNotEmpty()) views.add(line(bits.joinToString("  ·  "), "#374151", 13f))
-        a.tensionResolved?.let { if (it >= 0.7) views.add(line("✓ Jev 判断报价条件较完整（仍需核价）", "#16A34A", 12f)) }
+        a.tensionResolved?.let { if (it >= 0.7) views.add(line("可讨论套餐·权益以合同为准", "#16A34A", 12f)) }
 
         a.literalQuestion?.let { if (it >= 0.5) views.add(line("⚠ 需人工技术/合规审核", "#DC2626", 13f, true)) }
 
@@ -445,7 +455,7 @@ class OverlayController(private val ctx: Context) {
             setPadding(0, 0, 0, dp(6))
         }
         row.addView(TextView(ctx).apply {
-            text = "信息风险 $lvl/$max"
+            text = "承诺风险 $lvl/$max"
             setTextColor(Color.WHITE); textSize = 13f; setTypeface(typeface, Typeface.BOLD)
             setPadding(dp(10), dp(4), dp(10), dp(4))
             background = card(20, color)
@@ -541,32 +551,101 @@ class OverlayController(private val ctx: Context) {
     }
 
     private fun dangerWord(lvl: Int): String = when {
-        lvl >= 8 -> "必须核实"
-        lvl >= 6 -> "谨慎承诺"
-        lvl >= 3 -> "待补资料"
-        else -> "信息较完整"
+        lvl >= 8 -> "须人工核实"
+        lvl >= 6 -> "避免承诺"
+        lvl >= 3 -> "先补信息"
+        else -> "可继续沟通"
     }
 
     companion object {
+        private val ROLE = mapOf(
+            "buyer" to "采购商",
+            "supplier" to "供应商",
+            "both" to "供采双角色",
+            "unknown" to "待确认"
+        )
+        private val COMPANY = mapOf(
+            "claimed_factory" to "自述生产企业",
+            "claimed_trader" to "自述贸易商",
+            "mixed" to "生产/贸易兼有",
+            "unknown" to "未知"
+        )
+        private val STAGE = mapOf(
+            "prospecting" to "拉新",
+            "discovery" to "需求挖掘",
+            "trust_building" to "建立信任",
+            "package_discussion" to "套餐介绍",
+            "objection" to "异议处理",
+            "contract_payment" to "合同/付款",
+            "delivery_followup" to "服务交付",
+            "unknown" to "待确认"
+        )
+        private val DIRECTION = mapOf(
+            "find_downstream" to "找下游客户",
+            "find_supplier" to "找上游供应商",
+            "verify_factory" to "核实工厂/贸易商",
+            "inquiry_matching" to "找真实询单",
+            "transaction_match" to "撮合交易",
+            "package_rights" to "了解套餐",
+            "other" to "待确认"
+        )
+        private val OBJECTION = mapOf(
+            "data_accuracy" to "数据真实/时效",
+            "price" to "价格",
+            "effectiveness" to "效果",
+            "trust" to "服务信任",
+            "duplicates" to "重复数据/独家性",
+            "platform" to "平台比较",
+            "rights_refund" to "权益/扣费/退款",
+            "no_need" to "暂无需求",
+            "other" to "其他",
+            "none" to "无"
+        )
+        private val INQUIRY = mapOf(
+            "complete" to "需求要素较完整·待核验",
+            "needs_details" to "待补关键采购要素",
+            "market_only" to "仅了解行情·暂不发布",
+            "not_applicable" to "不适用"
+        )
         private val INTENT = mapOf(
-            "product_inquiry" to "产品咨询", "request_quote" to "询价",
-            "negotiate_price" to "议价/比价", "request_sample" to "索样/试用",
-            "request_documents" to "索取资料", "delivery_order" to "交付/订单",
-            "after_sales" to "售后问题", "other" to "待确认"
+            "identify_business" to "确认经营业务",
+            "explore_leads" to "寻找客户商机",
+            "request_sourcing" to "寻源/询价",
+            "provide_inquiry" to "提供采购需求",
+            "request_evidence" to "索取数据样例/证据",
+            "compare_packages" to "了解会员套餐",
+            "resolve_objection" to "提出顾虑",
+            "contract_or_payment" to "合同/付款",
+            "after_sale" to "会员服务/售后",
+            "other" to "待确认"
         )
         private val NEEDS = mapOf(
-            "product_identity" to "产品名称/CAS", "grade_spec" to "级别/纯度/包装",
-            "quantity" to "采购数量", "destination" to "收货地/交货条件",
-            "delivery_date" to "需求日期", "verified_price" to "有效价格",
-            "verified_stock" to "真实库存", "documents" to "产品/批次资料",
+            "main_product" to "主营/所需产品",
+            "grade_spec" to "规格/含量/品牌",
+            "quantity" to "用量/采购数量",
+            "destination" to "收货地区",
+            "purchase_time" to "采购时间",
+            "target_industry" to "目标下游行业",
+            "target_region" to "目标地区",
+            "factory_preference" to "生产/贸易偏好",
+            "decision_maker" to "合同决策人",
+            "verified_data" to "已核验数据/样例",
+            "contract_terms" to "现行合同/扣费规则",
             "none" to "无关键缺失"
         )
         private val ACTION = mapOf(
-            "clarify_product" to "核实产品规格", "clarify_quantity" to "确认数量",
-            "clarify_delivery" to "确认交货条件", "check_price" to "查询授权价格",
-            "check_stock" to "核实库存/交期", "send_documents" to "核对并提供资料",
-            "arrange_sample" to "安排样品流程", "human_review" to "转交人工审核",
-            "follow_up_order" to "查询订单", "acknowledge" to "简短承接"
+            "clarify_business" to "确认经营产品",
+            "clarify_inquiry" to "逐项挖掘询盘",
+            "clarify_targets" to "确认目标企业",
+            "query_wenshu" to "申请问数查询",
+            "show_verified_sample" to "提供已核验样例",
+            "explain_manual_screening" to "解释人工筛选",
+            "explain_package" to "解释套餐权益",
+            "explain_terms" to "核对合同和积分规则",
+            "record_inquiry" to "记录询盘并核验",
+            "match_supplier" to "寻找合适供应商",
+            "human_followup" to "转交人工核查",
+            "follow_up" to "礼貌跟进"
         )
     }
 }
