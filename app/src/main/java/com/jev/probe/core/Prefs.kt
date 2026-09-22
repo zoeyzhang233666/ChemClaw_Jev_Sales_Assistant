@@ -281,6 +281,6 @@ class Prefs(context: Context, prefsName: String = PREFS_MAIN) {
         const val DEFAULT_VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct"
         const val DASHSCOPE_VISION_MODEL = "qwen-vl-max"
 
-        const val DEFAULT_REL = "化工 B2B 客户沟通；from=me 是销售人员，from=other 是采购客户；报价、库存、资质及产品技术参数必须核验"
+        const val DEFAULT_REL = "芯化和云商务沟通；from=me 是本公司业务员，from=other 是客户；客户可能是采购商或供应商；问数/数据/厂商身份/询单均须核验"
     }
 }
