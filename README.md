@@ -1,3 +1,5 @@
+> 本 Fork 的化工 B2B Jev 销售副驾第一阶段开发位于 [`feature/chemical-jev-mvp`](../../tree/feature/chemical-jev-mvp)，改造说明见 [`docs/chemical-jev-mvp.md`](docs/chemical-jev-mvp.md)。`main` 保留原项目行为。
+
 # Jev 聊天助手 (Jev Chat Assistant)
 
 **装在手机上的「对话副驾」：你在任何聊天 App 里聊天，它在旁边读懂对方、告诉你该怎么回，一键填进输入框，发不发由你。**
