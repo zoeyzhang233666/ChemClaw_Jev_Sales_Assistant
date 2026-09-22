@@ -39,130 +39,103 @@ object JevQuestions {
         put("criteria", JSONArray().also { a -> levels.forEach { a.put(it) } })
     }
 
-    /** The 7 judgment questions. Returns a fresh JSONObject each call. */
+    /**
+     * Chemical B2B sales decisions. The answer keys intentionally retain the
+     * original wire format so old callers can be migrated without changing the
+     * Jev HTTP client. See [ChemicalDecisionLabels] for their business meanings:
+     * true_intent = inquiry intent; danger_level = missing-information / commercial
+     * risk; she_needs = missing requirement; should_reply_now = can give a specific
+     * answer; best_action = next action; tension_resolved = quote readiness;
+     * literal_question = needs human technical/compliance review.
+     *
+     * These are suggestions, NEVER approval to quote, promise stock, or certify a
+     * substance. Real prices, documents and availability require verified data.
+     */
     fun judge(): JSONObject = JSONObject().apply {
         put("literal_question", noul(
-            "Is the other person's latest message meant purely literally, with no subtext? " +
-                "Judge from the whole thread, not one sentence in isolation.",
-            "The latest message is a straightforward statement, question, or plan " +
-                "with no implied accusation, test, sarcasm, hint, or unsaid request.",
-            "There is subtext: a test of whether you remember or care, sarcasm, " +
-                "an implied complaint, a hint they will not say outright, a trap question, " +
-                "an accusation dressed as a question, or a cold/short line that really means blame."
+            "Does the customer's latest inquiry require qualified human review before a factual or technical answer? " +
+                "Review includes hazardous chemicals, regulated sales/transport, product substitution, compatibility, " +
+                "process safety, toxicology, technical certification or a request to guarantee a result. " +
+                "Do not treat ordinary price/quantity questions as inherently hazardous.",
+            "A regulatory, safety, substitution, certification, or technically consequential assertion needs verification.",
+            "This is an ordinary sales inquiry that does not request a safety, regulatory, or technical conclusion."
         ))
         put("true_intent", choice(
-            "What is the other person's true intent in the latest message, given the full conversation? " +
-                "Prefer tone and context over surface wording. " +
-                "If they are checking whether you remember something or still care, choose confirm_you_care " +
-                "even if the words look like a request to 'say it' or to do something. " +
-                "If they already accepted and closed the matter peacefully, choose close_topic. " +
-                "Ending the relationship, deleting you, or 'don't talk to me' is vent_anger, never close_topic.",
+            "Classify the CURRENT customer's commercial intent using explicit chat evidence. " +
+                "Do not infer commitment or buying power from politeness. Prefer the latest actionable request.",
             linkedMapOf(
-                "confirm_you_care" to ("They are testing whether you remember, pay attention, or still care. " +
-                    "Signals: 'did you forget again', 'then say it', 'you better', sarcastic 'busy person', " +
-                    "asking you to prove you know a past conversation. " +
-                    "If they mainly want a new deliverable or a yes on a time, do not use this."),
-                "vent_anger" to ("They are angry or hurt and mainly want the feeling acknowledged. " +
-                    "They are blaming or raising the temperature; a specific plan is not the main point yet."),
-                "request_action" to ("They want a concrete action, time, deliverable, or commitment from you now, " +
-                    "and this is a real ask, not a loyalty test."),
-                "seek_explanation" to ("They want a factual explanation of why something happened. " +
-                    "They asked why or what is going on, not mainly for an apology or a new plan."),
-                "casual_chat" to ("Light talk, banter, sharing, teasing with a laugh, or friendly logistics " +
-                    "with no emotional test and no conflict. A friend suggesting a meal time can be this " +
-                    "if the thread is warm."),
-                "close_topic" to ("Peaceful wrap-up only: they accepted an apology, confirmed a happy plan, said thanks, " +
-                    "or clearly signaled they need nothing more. " +
-                    "Not a breakup, not 'don't contact me', not sarcastic 'I'm used to it'.")
+                "product_inquiry" to "Asking whether a specific chemical/product, brand, grade or alternative is offered.",
+                "request_quote" to "Asking a price, quotation, rate or total cost for a product.",
+                "negotiate_price" to "Discussing a discount, a competitor quote, price concessions or payment terms.",
+                "request_sample" to "Asking for a sample, trial quantity or evaluation.",
+                "request_documents" to "Requesting SDS, TDS, COA, certifications or technical parameters.",
+                "delivery_order" to "Asking about stock, dispatch, lead time, delivery, existing order or logistics.",
+                "after_sales" to "Reporting quality, shortage, returns, complaints or another post-sale issue.",
+                "other" to "Unclear or non-commercial talk; none of the above is established."
             )
         ))
         put("danger_level", score(
-            "How close is this conversation to a fight or to hurting the relationship? " +
-                "Match the current scene. " +
-                "If they genuinely accepted an apology or confirmed a happy plan, score the cooled-down present, " +
-                "not an earlier complaint. " +
-                "If an ultimatum (break up, report to the boss, stop covering for you) is still in force " +
-                "and has not been withdrawn, stay in that high bin even if the latest line names a specific task.",
+            "How much missing information or commercial uncertainty would make an immediate specific " +
+                "sales commitment risky? Use only the conversation and background facts. " +
+                "This is NOT a chemical hazard classification; do not infer legal compliance from this score.",
             listOf(
-                "Light chat or joking; no complaint, no test, no deadline.",
-                "Mild tease or a small reminder that is easy to laugh off; a clumsy reply would only feel slightly awkward.",
-                "A mild complaint or 'please remember next time' said without heat; they still send warm or practical follow-ups.",
-                "Noticeable unhappiness; they mention being forgotten, ignored, or kept waiting, but still give you a chance to make it right.",
-                "Sarcasm, cold short replies, or 'you better'; they are testing you, and a sloppy or fake-confident reply will escalate.",
-                "Openly upset; they accuse you of not listening or not caring; they expect a real response, not a joke.",
-                "Clearly angry and blaming you; a wrong reply will turn this into a fight.",
-                "Last-chance warning. They will not cover for you, do not want to keep talking unless this changes, " +
-                    "or tell you to finish a named checklist yourself because trust is almost gone.",
-                "An ultimatum is already on the table even if they also give a practical next step: " +
-                    "break up if you forget again, report you tonight, or stop working together if you miss this.",
-                "Active rupture: they said it is over, told you not to reply, deleted you, or are exploding."
+                "Enough verified context for a safe, non-binding factual response.",
+                "A minor optional detail is missing; respond without a firm commitment.",
+                "A small clarification is needed, such as grade or packaging.",
+                "One material quotation term such as quantity or destination is missing.",
+                "Multiple material product or delivery details are unclear.",
+                "Customer compares prices but equivalence of grade or delivery terms is unknown.",
+                "Customer expects a price, inventory or delivery promise without verified records.",
+                "A consequential product specification, certificate or contractual term is unverified.",
+                "Regulated, hazardous or technically sensitive request needs qualified human review.",
+                "High-consequence safety, compliance or technical claim must not be made from chat alone."
             )
         ))
         put("should_reply_now", noul(
-            "Should your next message contain substantive content? " +
-                "Substantive means: admitting a specific known fault, giving a concrete time/plan/deliverable, " +
-                "explaining facts you actually know, or reciting the recalled content they asked you to say. " +
-                "This is NOT 'should you send any message'. Timing is irrelevant. " +
-                "Answer FALSE if the thing they want you to recite or prove is not present in this snippet " +
-                "(you would be guessing). 'Then say it' / 'you better' while you are stalling is FALSE. " +
-                "Answer FALSE if they already accepted and closed the topic. " +
-                "Answer true only if the needed fact, plan, or named fault is already in this snippet.",
-            "The needed fact, named fault, or named time/place is already in this snippet, " +
-                "and they are waiting for that substance now.",
-            "Do not put substance in the next message: the recalled content is not in this snippet, " +
-                "they are testing whether you remember, a holding line is enough, " +
-                "saying less is safer, or they already closed the topic."
+            "Is there enough VERIFIED information in the supplied conversation/background to give the " +
+                "customer a specific substantive answer to the latest request now, without inventing " +
+                "price, inventory, COA, shipping promise or chemical performance? A clarification or " +
+                "acknowledgment alone does not count as a specific substantive answer.",
+            "The requested specific fact is supported by provided verified records and is safe to communicate.",
+            "A material fact is missing or unverified: ask a focused question or say you will check."
         ))
         put("best_action", choice(
-            "What type of next action is best? Do not decide whether to send a message immediately. " +
-                "Ignore timing. Choose only the action type. " +
-                "If they asked you to recall a specific past message or event and you have not shown that you actually remember it, " +
-                "choose check_history - do not apologize or invent a plan instead.",
+            "Choose the safest useful NEXT sales action for the latest message; never authorize a " +
+                "transaction, regulated sale, final technical recommendation or confirmed quotation.",
             linkedMapOf(
-                "check_history" to ("Look up prior chat or facts before taking a position. " +
-                    "Use when they ask you to repeat, recall, or prove you remember something specific."),
-                "apologize" to ("Lead with a sincere apology for a real mistake or hurt already identified. " +
-                    "Not for an unnamed forgotten thing when you should first find out what it was."),
-                "give_commitment" to ("Give a concrete promise, deadline, or arrangement they asked for " +
-                    "in a conflict or work-pressure setting."),
-                "explain" to ("Explain what happened or why, without leading with apology or a new plan."),
-                "acknowledge" to ("Show you heard them and care, without new facts, an apology, or a plan. " +
-                    "Use for light chat or when they mainly need to feel seen."),
-                "say_less" to ("Keep it short or add nothing. Extra words would over-explain, reopen a closed topic, " +
-                    "or pour fuel on an ultimatum that told you not to talk."),
-                "make_plan" to ("Propose or confirm logistics (time, place, task) for a non-conflict request " +
-                    "such as a meal or a meeting.")
+                "clarify_product" to "Ask for exact chemical identity/CAS, grade, purity, application or packaging.",
+                "clarify_quantity" to "Ask for purchase quantity or expected recurring volume.",
+                "clarify_delivery" to "Ask for destination, needed date or delivery/incoterm requirements.",
+                "check_price" to "Check a current authorized price and comparable quote conditions.",
+                "check_stock" to "Check inventory or confirmed lead time in the business system.",
+                "send_documents" to "Locate verified SDS/TDS/COA for the correct product and batch.",
+                "arrange_sample" to "Confirm sample specifications and follow the approved sample process.",
+                "human_review" to "Escalate to sales manager, compliance or qualified technical personnel.",
+                "follow_up_order" to "Look up the existing order and confirm its status.",
+                "acknowledge" to "Acknowledge the request or close the conversation without inventing facts."
             )
         ))
         put("she_needs", choice(
-            "What does the other person need from you right now? Judge the LATEST message first. " +
-                "If they genuinely accepted (thanks / got it / 没事了 / 那就这样 / 收到了 / 过去了), " +
-                "you MUST choose nothing, even if earlier they wanted action or an apology. " +
-                "Sarcastic 'I'm used to it', 'whatever', 'I don't want to hear it', 'don't bother coming' " +
-                "is NOT genuine satisfaction - do not choose nothing. " +
-                "If they asked you to recap a named time/place/date, choose action. " +
-                "If they are testing whether you remember or still care, and the content is unnamed, choose care.",
+            "Which SINGLE piece of information is most urgently missing to handle this inquiry? " +
+                "Select none only if the needed facts are in the supplied verified background.",
             linkedMapOf(
-                "apology" to "They need a sincere apology for hurt or a mistake, and they have not accepted one yet.",
-                "action" to ("They need a concrete action, time, commitment, recap of a named fact, or follow-through, " +
-                    "and they have not yet accepted one."),
-                "explanation" to "They need a clear explanation of what happened or why, and have not received it.",
-                "care" to ("They need proof you remember, listen, or care - a loyalty or attention test - " +
-                    "not yet a plan or an apology. Sarcastic 'I am used to it' belongs here, not nothing."),
-                "nothing" to ("They need nothing further. Genuine acceptance, a peaceful closed topic, " +
-                    "warm casual chat with no ask, or a rupture where they told you not to reply. " +
-                    "Not sarcasm pretending to be fine.")
+                "product_identity" to "Exact name, CAS, brand or unambiguous product identity is needed.",
+                "grade_spec" to "Purity, grade, product specification, application or packaging is needed.",
+                "quantity" to "Required quantity or unit is needed.",
+                "destination" to "Destination, delivery condition or shipping address is needed.",
+                "delivery_date" to "Required date or delivery window is needed.",
+                "verified_price" to "A current authorized price and its validity/terms are needed.",
+                "verified_stock" to "Actual inventory or lead-time verification is needed.",
+                "documents" to "Relevant, verified SDS/TDS/COA or batch documents are needed.",
+                "none" to "No key information is missing for a responsible next response."
             )
         ))
         put("tension_resolved", noul(
-            "Has interpersonal tension already been resolved? " +
-                "Answer true only if there was never tension, or the other person has clearly accepted, " +
-                "cooled down, joked again, or said it is fine. " +
-                "A sarcastic 'you better', an unanswered test, leftover blame, or an open ultimatum means false.",
-            "No remaining tension: they accepted, joked again, said it's fine, " +
-                "confirmed a happy plan, or the chat was never tense.",
-            "Tension is still present: they are waiting, testing, angry, sarcastic, " +
-                "issuing an ultimatum, or the issue is open."
+            "Is the inquiry READY for a specific quotation based on the supplied VERIFIED facts? " +
+                "Require unambiguous product/grade, quantity, delivery terms and authorized current pricing. " +
+                "Being friendly or showing buying intent is not enough.",
+            "Essential terms and a current authorized price are verified in the context.",
+            "Any essential term or authorized price is absent, uncertain or not verified."
         ))
     }
 
@@ -202,7 +175,7 @@ object JevQuestions {
         return state
     }
 
-    /** The best_reply ranking question over exactly 3 candidates (Chinese text kept). */
+    /** Jev compares candidate sales replies, preferring grounded and actionable text. */
     fun rankQuestion(candidates: List<String>): JSONObject {
         require(candidates.size == 3) { "rankQuestion expects exactly 3 candidates" }
         val keys = listOf("reply_a", "reply_b", "reply_c")
@@ -211,12 +184,12 @@ object JevQuestions {
         val q = JSONObject().apply {
             put("type", "choice")
             put("instructions",
-                "Which candidate reply is the most appropriate next message, " +
-                    "given the conversation and the other person's true need? " +
-                    "Prefer a reply that matches the best action type. " +
-                    "Penalize dismissive, over-promising, or off-topic replies. " +
-                    "If the facts are not yet confirmed, prefer the candidate that looks them up " +
-                    "instead of faking memory or a vague apology." + BACKGROUND_NOTE)
+                "Which Chinese chemical B2B sales reply is the most useful and factually grounded? " +
+                    "Prefer a reply matching the customer's latest request and next sales action. " +
+                    "Penalize invented prices, stock, lead time, purity, certifications, regulatory status, " +
+                    "chemical compatibility, or guaranteed performance. Where facts are missing, prefer " +
+                    "a focused clarification or an explicit offer to verify. Escalate safety and " +
+                    "technical conclusions to qualified humans; never claim final approval." + BACKGROUND_NOTE)
             put("criteria", criteria)
         }
         return JSONObject().put("best_reply", q)
