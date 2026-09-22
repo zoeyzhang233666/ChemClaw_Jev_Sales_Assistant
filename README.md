@@ -1,4 +1,4 @@
-> 本 Fork 的化工 B2B Jev 销售副驾第一阶段开发位于 [`feature/chemical-jev-mvp`](https://github.com/zoeyzhang233666/jev-chat-jarvis/tree/feature/chemical-jev-mvp)，改造说明见 [`docs/chemical-jev-mvp.md`](docs/chemical-jev-mvp.md)。`main` 保留原项目行为。
+> 芯化和云 Jev 销售副驾正在 [`feature/xinhua-sales-jev`](https://github.com/zoeyzhang233666/jev-chat-jarvis/tree/feature/xinhua-sales-jev) 开发，覆盖采购商挖询盘、供应商商机销售及 3880/7880 套餐。改造说明见 [`docs/xinhua-sales-jev-v1.md`](docs/xinhua-sales-jev-v1.md)。原版介绍见下方；`main` 尚未合并新方案。
 
 # Jev 聊天助手 (Jev Chat Assistant)
 
