@@ -1,4 +1,4 @@
-> 本 Fork 的化工 B2B Jev 销售副驾第一阶段开发位于 [`feature/chemical-jev-mvp`](../../tree/feature/chemical-jev-mvp)，改造说明见 [`docs/chemical-jev-mvp.md`](docs/chemical-jev-mvp.md)。`main` 保留原项目行为。
+> 本 Fork 的化工 B2B Jev 销售副驾第一阶段开发位于 [`feature/chemical-jev-mvp`](https://github.com/zoeyzhang233666/jev-chat-jarvis/tree/feature/chemical-jev-mvp)，改造说明见 [`docs/chemical-jev-mvp.md`](docs/chemical-jev-mvp.md)。`main` 保留原项目行为。
 
 # Jev 聊天助手 (Jev Chat Assistant)
 
