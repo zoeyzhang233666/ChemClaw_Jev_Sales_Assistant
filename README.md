@@ -6,12 +6,9 @@
 
 ## 下载 APK（Android）
 
-**已经提供 APK 安装包，不需要自行编译。**
+**唯一正式提供的 APK： [⬇️ 下载 ChemClaw-Jev.apk（v0.1.0）](https://github.com/zoeyzhang233666/jev-chat-jarvis/releases/download/v0.1.0/ChemClaw-Jev.apk)**（约 28.1 MB）
 
-- **[⬇️ 下载仓库内 APK：jev-assistant-v1.3-release.apk](apk/jev-assistant-v1.3-release.apk?raw=1)**（约 25.8 MB）
-- [下载 GitHub Release v0.1.0 的 ChemClaw-Jev.apk](https://github.com/zoeyzhang233666/jev-chat-jarvis/releases/download/v0.1.0/ChemClaw-Jev.apk)（约 28.1 MB；早期预发布版本）
-
-推荐从本仓库的 `apk/` 目录下载所需安装包。以上两个文件名称和大小不同，请不要默认视为同一构建。
+也可前往 [GitHub Releases 发布页面](https://github.com/zoeyzhang233666/jev-chat-jarvis/releases/tag/v0.1.0)，在 **Assets** 中点击 `ChemClaw-Jev.apk` 下载。无需自行编译。
 
 **手机安装步骤：**在 Android 手机上点击上面的链接下载 APK → 打开系统“下载”或文件管理器中的 APK → 按提示安装。如系统要求“允许安装来自此来源的应用”，请确认下载链接来自本仓库后再对浏览器或文件管理器授权。安装后请先配置获得授权的模型服务，并检查所需的无障碍和悬浮窗权限；当前仍是开发/测试版本，使用前请验收实际功能。
 
