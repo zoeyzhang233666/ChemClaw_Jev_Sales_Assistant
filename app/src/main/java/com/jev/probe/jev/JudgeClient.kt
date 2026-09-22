@@ -11,14 +11,14 @@ import com.jev.probe.core.kb.ChatContext
 import org.json.JSONObject
 
 /**
- * The Jev judgment route only: the 7 judgment questions in one call, and the
+ * The Jev judgment route only: business judgment questions in one call, and the
  * ranking question over already-drafted candidates. Reads judgeProvider /
  * judgeBaseUrl / judgeKey / judgeModel from [Prefs]; nothing generative here.
  */
 class JudgeClient(private val prefs: Prefs) {
 
     /**
-     * The 7 judgment questions (fast, ~1s). Errors are returned, not thrown.
+     * Business decision questions. Errors are returned, not thrown.
      *
      * @param ctx D-stage knowledge context; null or empty means the request body
      *        is byte-for-byte what v1.2 sent.
@@ -39,7 +39,13 @@ class JudgeClient(private val prefs: Prefs) {
                 tensionResolved = answers.optJSONObject("tension_resolved")?.optDouble("noul"),
                 literalQuestion = answers.optJSONObject("literal_question")?.optDouble("noul"),
                 rankedReplies = emptyList(),
-                latencyMs = System.currentTimeMillis() - start
+                latencyMs = System.currentTimeMillis() - start,
+                customerRole = parseChoice(answers.optJSONObject("customer_role")),
+                companyType = parseChoice(answers.optJSONObject("company_type")),
+                salesStage = parseChoice(answers.optJSONObject("sales_stage")),
+                serviceDirection = parseChoice(answers.optJSONObject("service_direction")),
+                objection = parseChoice(answers.optJSONObject("objection")),
+                inquiryReadiness = parseChoice(answers.optJSONObject("inquiry_readiness"))
             )
         } catch (e: Exception) {
             Log.w(TAG, "judge failed: ${e.message}")
