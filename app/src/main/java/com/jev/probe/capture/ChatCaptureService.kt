@@ -579,7 +579,7 @@ open class ChatCaptureService : AccessibilityService() {
             if (node.isEditable && node.isVisibleToUser && node.isEnabled) {
                 val bounds = Rect()
                 node.getBoundsInScreen(bounds)
-                if (!bounds.isEmpty) {
+                if (!bounds.isEmpty()) {
                     val id = node.viewIdResourceName.orEmpty()
                     val knownChatEditor = id.endsWith(":id/input") ||
                         id.endsWith(":id/kb_rich_text_content")
