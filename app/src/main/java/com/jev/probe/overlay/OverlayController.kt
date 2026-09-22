@@ -164,7 +164,7 @@ class OverlayController(private val ctx: Context) {
         // Header
         val header = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         header.addView(TextView(ctx).apply {
-            text = "Jev 分析"; setTextColor(Color.parseColor("#111827")); textSize = 15f
+            text = "Jev 化工销售副驾"; setTextColor(Color.parseColor("#111827")); textSize = 15f
             setTypeface(typeface, Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         })
@@ -405,16 +405,18 @@ class OverlayController(private val ctx: Context) {
         }
         // Intent headline.
         a.trueIntent?.let {
-            views.add(line("对方真实意图：${INTENT[it.choice] ?: it.choice}", "#111827", 15f, true))
+            views.add(line("客户意图：${INTENT[it.choice] ?: it.choice}", "#111827", 15f, true))
             views.add(hint("把握 ${(it.confidence * 100).roundToInt()}%"))
         }
         // Compact secondary line: needs · action · reply-now.
         val bits = ArrayList<String>()
-        a.sheNeeds?.let { bits.add("要${(NEEDS[it.choice] ?: it.choice)}") }
+        a.sheNeeds?.let { bits.add("待确认：${(NEEDS[it.choice] ?: it.choice)}") }
         a.bestAction?.let { bits.add(ACTION[it.choice] ?: it.choice) }
-        a.shouldReplyNow?.let { bits.add(if (it >= 0.5) "可给实质" else "先别给实质") }
+        a.shouldReplyNow?.let { bits.add(if (it >= 0.5) "信息足以具体答复" else "需核实后答复") }
         if (bits.isNotEmpty()) views.add(line(bits.joinToString("  ·  "), "#374151", 13f))
-        a.tensionResolved?.let { if (it >= 0.7) views.add(line("✓ 紧张已缓解", "#16A34A", 12f)) }
+        a.tensionResolved?.let { if (it >= 0.7) views.add(line("✓ Jev 判断报价条件较完整（仍需核价）", "#16A34A", 12f)) }
+
+        a.literalQuestion?.let { if (it >= 0.5) views.add(line("⚠ 需人工技术/合规审核", "#DC2626", 13f, true)) }
 
         views.add(divider())
         views.add(line("候选回复（Jev 排序）", "#9CA3AF", 12f))
@@ -443,7 +445,7 @@ class OverlayController(private val ctx: Context) {
             setPadding(0, 0, 0, dp(6))
         }
         row.addView(TextView(ctx).apply {
-            text = "危险 $lvl/$max"
+            text = "信息风险 $lvl/$max"
             setTextColor(Color.WHITE); textSize = 13f; setTypeface(typeface, Typeface.BOLD)
             setPadding(dp(10), dp(4), dp(10), dp(4))
             background = card(20, color)
@@ -539,23 +541,32 @@ class OverlayController(private val ctx: Context) {
     }
 
     private fun dangerWord(lvl: Int): String = when {
-        lvl >= 8 -> "很危险"
-        lvl >= 6 -> "偏危险"
-        lvl >= 3 -> "留神"
-        else -> "安全"
+        lvl >= 8 -> "必须核实"
+        lvl >= 6 -> "谨慎承诺"
+        lvl >= 3 -> "待补资料"
+        else -> "信息较完整"
     }
 
     companion object {
         private val INTENT = mapOf(
-            "confirm_you_care" to "确认你在不在乎", "vent_anger" to "在发泄情绪",
-            "request_action" to "要你办事", "seek_explanation" to "要个解释",
-            "casual_chat" to "随便聊聊", "close_topic" to "事情过去了")
+            "product_inquiry" to "产品咨询", "request_quote" to "询价",
+            "negotiate_price" to "议价/比价", "request_sample" to "索样/试用",
+            "request_documents" to "索取资料", "delivery_order" to "交付/订单",
+            "after_sales" to "售后问题", "other" to "待确认"
+        )
         private val NEEDS = mapOf(
-            "apology" to "道歉", "action" to "具体行动", "explanation" to "解释",
-            "care" to "你的在乎", "nothing" to "（不用做什么）")
+            "product_identity" to "产品名称/CAS", "grade_spec" to "级别/纯度/包装",
+            "quantity" to "采购数量", "destination" to "收货地/交货条件",
+            "delivery_date" to "需求日期", "verified_price" to "有效价格",
+            "verified_stock" to "真实库存", "documents" to "产品/批次资料",
+            "none" to "无关键缺失"
+        )
         private val ACTION = mapOf(
-            "check_history" to "翻聊天记录", "apologize" to "先道歉", "give_commitment" to "给承诺",
-            "explain" to "解释清楚", "acknowledge" to "接住情绪", "say_less" to "少说两句",
-            "make_plan" to "定个安排")
+            "clarify_product" to "核实产品规格", "clarify_quantity" to "确认数量",
+            "clarify_delivery" to "确认交货条件", "check_price" to "查询授权价格",
+            "check_stock" to "核实库存/交期", "send_documents" to "核对并提供资料",
+            "arrange_sample" to "安排样品流程", "human_review" to "转交人工审核",
+            "follow_up_order" to "查询订单", "acknowledge" to "简短承接"
+        )
     }
 }
