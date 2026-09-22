@@ -260,24 +260,28 @@ open class ChatCaptureService : AccessibilityService() {
             }
             main.post { overlay?.setContextInfo(ctx?.notes?.size ?: 0, ctx?.history?.size ?: 0) }
 
-            // Judgment is fast (~1s) — show it immediately.
+            // Jev is the decision engine: draft only AFTER its judgment is
+            // available, rather than racing an uninformed generic reply.
             submit {
                 val judgment = client.judge(snapshot, rel, ctx)
-                main.post {
-                    if (judgment.error != null) { analyzing = false; overlay?.showError(judgment.error) }
-                    else overlay?.showJudgment(judgment)
-                }
-            }
-            // Candidate replies are slower (generative + rank) — fill in when ready.
-            submit {
-                var replyError: String? = null
-                val ranked = try { client.draftAndRank(snapshot, rel, ctx) } catch (e: Exception) {
-                    replyError = e.message ?: e.javaClass.simpleName
-                    emptyList()
-                }
-                main.post {
-                    analyzing = false
-                    overlay?.showReplies(ranked, replyError) { text -> fillInput(text) }
+                if (judgment.error != null) {
+                    main.post {
+                        analyzing = false
+                        overlay?.showError(judgment.error)
+                    }
+                } else {
+                    main.post { overlay?.showJudgment(judgment) }
+                    var replyError: String? = null
+                    val ranked = try {
+                        client.draftAndRank(snapshot, rel, ctx, judgment)
+                    } catch (e: Exception) {
+                        replyError = e.message ?: e.javaClass.simpleName
+                        emptyList()
+                    }
+                    main.post {
+                        analyzing = false
+                        overlay?.showReplies(ranked, replyError) { text -> fillInput(text) }
+                    }
                 }
             }
         }
