@@ -4,12 +4,23 @@
 
 > 本仓库 Fork 自 [jev-chat/jev-chat-jarvis](https://github.com/jev-chat/jev-chat-jarvis)。原项目 README 保留在 [docs/upstream-readme.md](docs/upstream-readme.md)，上游版权与许可证见 [LICENSE](LICENSE)。上游原有聊天采集与无障碍实现仍需要在目标手机及聊天 App 版本验收。
 
+## 下载 APK（Android）
+
+**已经提供 APK 安装包，不需要自行编译。**
+
+- **[⬇️ 下载仓库内 APK：jev-assistant-v1.3-release.apk](apk/jev-assistant-v1.3-release.apk?raw=1)**（约 25.8 MB）
+- [下载 GitHub Release v0.1.0 的 ChemClaw-Jev.apk](https://github.com/zoeyzhang233666/jev-chat-jarvis/releases/download/v0.1.0/ChemClaw-Jev.apk)（约 28.1 MB；早期预发布版本）
+
+推荐从本仓库的 `apk/` 目录下载所需安装包。以上两个文件名称和大小不同，请不要默认视为同一构建。
+
+**手机安装步骤：**在 Android 手机上点击上面的链接下载 APK → 打开系统“下载”或文件管理器中的 APK → 按提示安装。如系统要求“允许安装来自此来源的应用”，请确认下载链接来自本仓库后再对浏览器或文件管理器授权。安装后请先配置获得授权的模型服务，并检查所需的无障碍和悬浮窗权限；当前仍是开发/测试版本，使用前请验收实际功能。
+
 ## 当前开发状态
 
-- 开发分支：[feature/xinhua-sales-jev](https://github.com/zoeyzhang233666/jev-chat-jarvis/tree/feature/xinhua-sales-jev)
-- 代码评审：[PR #2：ChemClaw-Jev 销售助手](https://github.com/zoeyzhang233666/jev-chat-jarvis/pull/2)
+- 当前主分支：`main`（已包含原 `feature/xinhua-sales-jev` 的开发成果）
+- 原开发分支：[feature/xinhua-sales-jev](https://github.com/zoeyzhang233666/jev-chat-jarvis/tree/feature/xinhua-sales-jev)（保留供历史参考）
+- 原开发评审：[PR #2：ChemClaw-Jev 销售助手](https://github.com/zoeyzhang233666/jev-chat-jarvis/pull/2)
 - 详细业务决策与验收场景：[docs/xinhua-sales-jev-v1.md](docs/xinhua-sales-jev-v1.md)
-- `main` 尚未合并本开发分支。旧版化工原料报价尝试见 PR #1，**请以 PR #2 为当前方向**。
 
 ### 它帮助业务员做什么？
 
@@ -21,7 +32,7 @@
 | 客户对数据准确性、效果、平台或费用有疑问 | 销售阶段、明确异议和仍缺的信息 | 给出证据、服务说明或申请人工复核 |
 | 客户了解会员权益 | 客户需要的询单额度、主打产品、订阅产品等 | 解释 3880 / 7880 套餐实际权益 |
 
-### 已有功能（开发分支）
+### 已有功能（当前 main）
 
 1. 继续使用原项目的 Android 聊天采集、OCR、可移动悬浮窗、设置页、知识库、模型请求客户端及人工填入回复。**程序不自动发送消息、付款或下单。**
 2. Jev 在一次请求内判断 13 项业务信号：客户供采角色、自述公司性质、销售阶段、服务方向、客户意图、异议、缺失信息、询盘状态、建议动作等。企业是工厂还是贸易商不能只靠聊天判定为“已核验”。
@@ -61,7 +72,7 @@
 生成模型起草3条回复 → Jev选择回复 → 业务员核对后手动发送
 ```
 
-**重要：本分支尚未连通问数、CRM 或公司 MCP。** Jev 的 `query_wenshu` 当前只是“建议查询”动作，不能声称实际已查到数据；也不会把任何员工 API Key 写进手机源码或公开仓库。L3/L4 客户、成交和会员类数据需要遵守公司既有授权边界。
+**重要：当前版本尚未连通问数、CRM 或公司 MCP。** Jev 的 `query_wenshu` 当前只是“建议查询”动作，不能声称实际已查到数据；也不会把任何员工 API Key 写进手机源码或公开仓库。L3/L4 客户、成交和会员类数据需要遵守公司既有授权边界。
 
 企业微信采集适配、电话记录录入、实际企业/询盘结构化数据、权限网关和真实 MCP 结果回填仍属后续工程。
 
