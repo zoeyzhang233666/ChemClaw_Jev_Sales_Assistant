@@ -16,7 +16,7 @@ class JevClient(prefs: Prefs) {
     private val judgeClient = JudgeClient(prefs)
     private val replyClient = ReplyClient(prefs)
 
-    /** The 7 judgment questions. Errors come back inside [Analysis.error]. */
+    /** Sales decision questions. Errors come back inside [Analysis.error]. */
     fun judge(snapshot: ChatSnapshot, relationship: String, ctx: ChatContext? = null): Analysis =
         judgeClient.judge(snapshot, relationship, ctx)
 
@@ -28,7 +28,7 @@ class JevClient(prefs: Prefs) {
         decision: Analysis? = null
     ): List<RankedReply> {
         val candidates = replyClient.draft(snapshot, relationship, ctx, decision)
-        return judgeClient.rank(snapshot, relationship, candidates, ctx)
+        return judgeClient.rank(snapshot, relationship, candidates, ctx, decision)
     }
 
     /** Judge + replies, sequential. Used by the settings connectivity test. */
