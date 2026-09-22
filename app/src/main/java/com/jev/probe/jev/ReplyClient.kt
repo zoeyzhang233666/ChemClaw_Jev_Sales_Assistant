@@ -3,6 +3,7 @@ package com.jev.probe.jev
 import com.jev.probe.core.Analysis
 import com.jev.probe.core.ChatSnapshot
 import com.jev.probe.core.Prefs
+import com.jev.probe.core.PackageCatalog
 import com.jev.probe.core.kb.ChatContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,23 +26,34 @@ class ReplyClient(private val prefs: Prefs) {
         val convo = snapshot.messages.takeLast(10).joinToString("\n") {
             (if (it.side == "me") "我" else "对方") + "：" + it.text
         }
-        val sys = "你是化工 B2B 销售回复助手。只输出 JSON 数组，含且仅含 3 条简洁、自然、不同策略的中文回复，" +
-            "每条不超过 100 字。根据 Jev 决策的下一步动作回复客户，务必避免编造报价、优惠、库存、交期、CAS、" +
-            "产品纯度、SDS/COA、资质、安全结论及替代品适用性。资料未核实时只说需要核实或询问缺失字段。" +
-            "涉及危险化学品、合规、技术替代或工艺安全时要求有资质人员复核，不直接保证安全、合法或有效。" +
-            "严禁自动承诺成交或发货；不要解释，直接输出 JSON 数组。"
+        val sys = "你是芯化和云内部业务员的销售副驾，不是化学品零售客服。业务包括开发采购商、" +
+            "挖掘真实询单、匹配供应商、为供应商找下游、筛选实际工厂或贸易商、销售每日询单套餐。" +
+            "严格根据 Jev 的客户角色、销售阶段、异议和下一步动作起草三个不同策略的中文微信回复。" +
+            "每条不超过100字，每次优先问一个缺失字段，不要连珠炮提问，不要在明确拒绝后反复催促。" +
+            "只有真实采购委托才能表示有客户在要货；不能假冒采购商或供应商，也不能虚构询单、" +
+            "工厂核验、数据规模、成交截图、合作案例、报价、供应商资质及人工服务结果。" +
+            "问数/MCP未接入或未返回已授权且有来源的结果时，不得说已经查到多少家或已有采购商。" +
+            "不承诺必然成交、95%准确率、80%转化率或无条件退款；不声称可直接联系任何敏感联系人。" +
+            "3880/7880套餐只能引用下面的已确认权益，服务费、积分扣减和退款以现行合同核实。" +
+            "如需核验真实工厂、危化品经营与运输、信用或财务情况，提示人工审核。" +
+            "只输出JSON数组，含且仅含3条可手动发送的自然口语回复。"
         val decisionBlock = if (decision == null) "" else buildString {
-            append("Jev 业务判断（辅助建议，不是已核验事实）：\n")
-            append("采购意图：").append(decision.trueIntent?.choice ?: "unknown").append('\n')
+            append("Jev 销售判断（是辅助判断，不是数据库/人工核验结果）：\n")
+            append("客户角色：").append(decision.customerRole?.choice ?: "unknown").append('\n')
+            append("企业性质（仅为客户描述）：").append(decision.companyType?.choice ?: "unknown").append('\n')
+            append("销售阶段：").append(decision.salesStage?.choice ?: "unknown").append('\n')
+            append("服务方向：").append(decision.serviceDirection?.choice ?: "unknown").append('\n')
+            append("客户当下意图：").append(decision.trueIntent?.choice ?: "unknown").append('\n')
+            append("当前异议：").append(decision.objection?.choice ?: "unknown").append('\n')
             append("当前缺失：").append(decision.sheNeeds?.choice ?: "unknown").append('\n')
+            append("询盘状态：").append(decision.inquiryReadiness?.choice ?: "unknown").append('\n')
             append("建议动作：").append(decision.bestAction?.choice ?: "unknown").append('\n')
-            append("可以直接给具体答复：").append((decision.shouldReplyNow ?: 0.0) >= 0.5).append('\n')
-            append("可正式报价：").append((decision.tensionResolved ?: 0.0) >= 0.5).append('\n')
-            append("需要人工技术/合规复核：").append((decision.literalQuestion ?: 0.0) >= 0.5).append('\n')
-            append("不可把上述判断当作已确认价格、库存、资质或产品安全证据。\n")
+            append("具体事实足够直接回答：").append((decision.shouldReplyNow ?: 0.0) >= 0.5).append('\n')
+            append("可讨论套餐（不是付款承诺）：").append((decision.tensionResolved ?: 0.0) >= 0.5).append('\n')
+            append("需人工核实：").append((decision.literalQuestion ?: 0.0) >= 0.5).append('\n')
         }
-        val user = knowledgeBlock(relationship, ctx) + decisionBlock +
-            "客户类型/业务背景：${relationship}\n\n最近对话：\n${convo}\n\n请给出 3 条候选回复。"
+        val user = PackageCatalog.promptContext() + knowledgeBlock(relationship, ctx) + decisionBlock +
+            "业务员背景（可编辑）：${relationship}\n\n最近对话：\n${convo}\n\n请给出 3 条候选回复。"
         return parseThree(chat(sys, user, temperature = 0.8))
     }
 
