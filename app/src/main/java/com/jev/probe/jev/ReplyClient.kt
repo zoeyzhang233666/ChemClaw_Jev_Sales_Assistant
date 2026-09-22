@@ -1,5 +1,6 @@
 package com.jev.probe.jev
 
+import com.jev.probe.core.Analysis
 import com.jev.probe.core.ChatSnapshot
 import com.jev.probe.core.Prefs
 import com.jev.probe.core.kb.ChatContext
@@ -20,15 +21,27 @@ class ReplyClient(private val prefs: Prefs) {
      *        history are prepended to the prompt with an instruction to stay
      *        consistent with them and invent nothing beyond them.
      */
-    fun draft(snapshot: ChatSnapshot, relationship: String, ctx: ChatContext? = null): List<String> {
+    fun draft(snapshot: ChatSnapshot, relationship: String, ctx: ChatContext? = null, decision: Analysis? = null): List<String> {
         val convo = snapshot.messages.takeLast(10).joinToString("\n") {
             (if (it.side == "me") "我" else "对方") + "：" + it.text
         }
-        val sys = "你是中文即时通讯回复助手。只输出一个 JSON 数组，含且仅含 3 条候选回复文本，" +
-            "三条策略要有区别（例如：一条稳妥承接、一条给具体行动或承诺、一条简短低姿态）。" +
-            "每条不超过 40 字，口语、自然、像真人在聊天软件里发消息。不要解释，不要加引号以外的内容，直接输出 JSON 数组。"
-        val user = knowledgeBlock(relationship, ctx) +
-            "关系：$relationship\n\n最近对话：\n$convo\n\n请给出 3 条候选回复。"
+        val sys = "你是化工 B2B 销售回复助手。只输出 JSON 数组，含且仅含 3 条简洁、自然、不同策略的中文回复，" +
+            "每条不超过 100 字。根据 Jev 决策的下一步动作回复客户，务必避免编造报价、优惠、库存、交期、CAS、" +
+            "产品纯度、SDS/COA、资质、安全结论及替代品适用性。资料未核实时只说需要核实或询问缺失字段。" +
+            "涉及危险化学品、合规、技术替代或工艺安全时要求有资质人员复核，不直接保证安全、合法或有效。" +
+            "严禁自动承诺成交或发货；不要解释，直接输出 JSON 数组。"
+        val decisionBlock = if (decision == null) "" else buildString {
+            append("Jev 业务判断（辅助建议，不是已核验事实）：\n")
+            append("采购意图：").append(decision.trueIntent?.choice ?: "unknown").append('\n')
+            append("当前缺失：").append(decision.sheNeeds?.choice ?: "unknown").append('\n')
+            append("建议动作：").append(decision.bestAction?.choice ?: "unknown").append('\n')
+            append("可以直接给具体答复：").append((decision.shouldReplyNow ?: 0.0) >= 0.5).append('\n')
+            append("可正式报价：").append((decision.tensionResolved ?: 0.0) >= 0.5).append('\n')
+            append("需要人工技术/合规复核：").append((decision.literalQuestion ?: 0.0) >= 0.5).append('\n')
+            append("不可把上述判断当作已确认价格、库存、资质或产品安全证据。\n")
+        }
+        val user = knowledgeBlock(relationship, ctx) + decisionBlock +
+            "客户类型/业务背景：\${relationship}\n\n最近对话：\n\${convo}\n\n请给出 3 条候选回复。"
         return parseThree(chat(sys, user, temperature = 0.8))
     }
 
@@ -39,8 +52,8 @@ class ReplyClient(private val prefs: Prefs) {
         val history = ctx.history
         if (background.isBlank() && history.isEmpty()) return ""
         val sb = StringBuilder()
-        sb.append("以下是关于我和对方的背景与知识库，回复必须与之一致，")
-            .append("可以直接引用其中事实，不要编造知识库里没有的事实。\n")
+        sb.append("以下是销售背景与业务知识库，回复必须与之一致，")
+            .append("只能引用已核验的事实，不得将笔记视为实时价格、库存或安全认证。\n")
         if (background.isNotBlank()) sb.append(background).append('\n')
         if (history.isNotEmpty()) {
             sb.append("\n更早的聊天记录（越靠下越新）：\n")
