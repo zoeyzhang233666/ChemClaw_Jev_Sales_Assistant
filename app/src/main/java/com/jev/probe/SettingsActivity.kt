@@ -263,7 +263,7 @@ class SettingsActivity : AppCompatActivity() {
         // =================== 分析 ===================
         root.addView(section("分析"))
         val card2 = card()
-        card2.addView(label("关系描述（给 Jev 判断用）"))
+        card2.addView(label("化工销售业务背景（给 Jev 判断用）"))
         val relEdit = edit(prefs.relationship, Prefs.DEFAULT_REL)
         card2.addView(relEdit)
         card2.addView(label("会话白名单（每行一个关键词，空=所有会话）"))
