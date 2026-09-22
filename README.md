@@ -14,6 +14,17 @@
 
 在 Android 手机上点击上面的链接下载 APK → 打开系统“下载”或文件管理器中的 APK → 按提示安装。如系统要求“允许安装来自此来源的应用”，请确认下载链接来自本仓库后再对浏览器或文件管理器授权。安装后请先配置获得授权的模型服务，并检查所需的无障碍和悬浮窗权限；当前仍是开发/测试版本，使用前请验收实际功能。
 
+## 效果展示
+
+在微信聊天界面通过 Jev 悬浮窗查看销售分析结果，并选择合适的候选回复；回复由业务员确认后手动复制或填入。
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/demo-overview.jpg" alt="ChemClaw-Jev 客户意图与销售阶段分析面板" width="320"><br><sub>客户意图、销售阶段与风险提示</sub></td>
+    <td align="center" width="50%"><img src="docs/demo-replies.jpg" alt="ChemClaw-Jev Jev 排序的候选销售回复" width="320"><br><sub>Jev 排序的候选回复：复制或填入</sub></td>
+  </tr>
+</table>
+
 ## 当前开发状态
 
 - 当前主分支：`main`（已包含原 `feature/xinhua-sales-jev` 的开发成果）
