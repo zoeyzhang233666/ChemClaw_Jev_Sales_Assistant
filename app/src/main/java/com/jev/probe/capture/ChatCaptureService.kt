@@ -475,52 +475,67 @@ open class ChatCaptureService : AccessibilityService() {
         }
     }
 
-    /** Fill the chat input box with the chosen reply (never sends). */
+    /**
+     * Fill only the conversation we were analyzing. Tapping the overlay can make
+     * the overlay (or the keyboard) the active accessibility window, so looking
+     * exclusively at rootInActiveWindow often finds no editable chat field.
+     */
     private fun fillInput(text: String) {
+        val targetPkg = activePkg ?: foregroundPkg
+        if (targetPkg.isNullOrBlank()) {
+            copyToClipboard(text)
+            overlay?.toast("找不到当前聊天窗口，已复制，请手动粘贴")
+            return
+        }
         submit {
-            // Fast path: SET_TEXT works when the box already has input focus and no
-            // IME composing session is active.
-            var ok = trySetText(text)
-            if (!ok) {
-                // Otherwise focus the box (pops the keyboard) and retry SET_TEXT;
-                // if the IME composing region still swallows it (WeChat), PASTE from
-                // the clipboard. The box is cleared before PASTE so a SET_TEXT that
-                // silently took (but failed verification) never gets doubled.
-                // Never clicks send.
-                val edit = rootInActiveWindow?.let { findEditable(it) }
+            var ok = false
+            var reason = "未找到聊天输入框"
+            try {
+                var edit = findChatEditable(targetPkg)
                 if (edit != null) {
-                    edit.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                    Thread.sleep(300)
-                    ok = trySetText(text)
+                    // Explicit focus (not accessibility focus) before editing.
+                    if (!edit.isFocused) {
+                        edit.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        edit.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                        Thread.sleep(180)
+                    }
+                    ok = trySetText(targetPkg, text)
                     if (!ok) {
-                        copyToClipboard(text)
-                        val focused = rootInActiveWindow?.let { findEditable(it) } ?: edit
-                        setTextRaw(focused, "")
-                        val pasted = focused.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                        Thread.sleep(150)
-                        val after = readInput()
-                        ok = (after != null && after.contains(text)) || (pasted && after == null)
-                        Log.i(TAG, "fill: paste=$pasted readback=${after?.length ?: -1}")
+                        val after = readInput(targetPkg)
+                        // Never blindly erase an existing draft, and never paste
+                        // when SET_TEXT may already have worked but readback is
+                        // unavailable: either case can duplicate or lose text.
+                        if (after == "") {
+                            copyToClipboard(text)
+                            edit = findChatEditable(targetPkg)
+                            val pasted = edit?.performAction(AccessibilityNodeInfo.ACTION_PASTE) == true
+                            Thread.sleep(180)
+                            ok = readInput(targetPkg) == text
+                            reason = if (pasted) "已尝试粘贴，但未能确认输入结果" else "当前聊天不支持自动填入"
+                            Log.i(TAG, "fill: paste=$pasted confirmed=$ok")
+                        } else {
+                            reason = if (after == null) "系统未开放输入框文字读取" else "输入框已有文字，未覆盖草稿"
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                reason = "输入操作失败：${e.javaClass.simpleName}"
+                Log.w(TAG, "fill failed: ${e.javaClass.simpleName}")
             }
+            if (!ok) copyToClipboard(text)
             main.post {
                 if (ok) overlay?.toast("已填入，确认后自己发送")
-                else { copyToClipboard(text); overlay?.toast("已复制，长按输入框粘贴") }
+                else overlay?.toast("$reason；已复制，请手动粘贴")
             }
         }
     }
 
     /** Set text on the chat input box, verifying it actually took. */
-    private fun trySetText(text: String): Boolean {
-        val edit = rootInActiveWindow?.let { findEditable(it) } ?: return false
+    private fun trySetText(targetPkg: String, text: String): Boolean {
+        val edit = findChatEditable(targetPkg) ?: return false
         if (!setTextRaw(edit, text)) return false
-        // SET_TEXT can report success without filling an unfocused box; verify.
-        // Read back through refresh() — the node cache can still hold the old
-        // (empty) text right after the action, which made Feishu look like a
-        // failure and triggered a second PASTE on top.
-        Thread.sleep(150)
-        val after = readInput()
+        Thread.sleep(180)
+        val after = readInput(targetPkg)
         Log.i(TAG, "fill: setText readback=${after?.length ?: -1} want=${text.length}")
         return after == text
     }
@@ -532,24 +547,53 @@ open class ChatCaptureService : AccessibilityService() {
         return edit.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
     }
 
-    /** Current text of the input box, fetched fresh (bypassing the node cache). */
-    private fun readInput(): String? {
-        val edit = rootInActiveWindow?.let { findEditable(it) } ?: return null
+    /**
+     * Resolve the actual chat application's window, not the overlay/IME root.
+     * The accessibility service opts into flagRetrieveInteractiveWindows in XML.
+     */
+    private fun findChatEditable(targetPkg: String): AccessibilityNodeInfo? {
+        val chatRoot = windows.firstOrNull { window ->
+            window.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION &&
+                window.root?.packageName?.toString() == targetPkg
+        }?.root ?: rootInActiveWindow?.takeIf { it.packageName?.toString() == targetPkg }
+        return chatRoot?.let { findEditable(it) }
+    }
+
+    /** Current text of the input box, fetched fresh from the chat app window. */
+    private fun readInput(targetPkg: String): String? {
+        val edit = findChatEditable(targetPkg) ?: return null
         runCatching { edit.refresh() }
         return edit.text?.toString()
     }
 
+    /** Prefer the actual focused editor, then the bottommost visible editor. */
     private fun findEditable(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
         val stack = ArrayDeque<AccessibilityNodeInfo>()
         stack.addLast(root)
+        var best: AccessibilityNodeInfo? = null
+        var bestScore = Int.MIN_VALUE
         var guard = 0
         while (stack.isNotEmpty() && guard < 5000) {
             guard++
             val node = stack.removeLast()
-            if (node.isEditable) return node
+            if (node.isEditable && node.isVisibleToUser && node.isEnabled) {
+                val bounds = Rect()
+                node.getBoundsInScreen(bounds)
+                if (!bounds.isEmpty) {
+                    val id = node.viewIdResourceName.orEmpty()
+                    val knownChatEditor = id.endsWith(":id/input") ||
+                        id.endsWith(":id/kb_rich_text_content")
+                    val score = (if (node.isFocused) 1_000_000 else 0) +
+                        (if (knownChatEditor) 10_000 else 0) + bounds.bottom
+                    if (score > bestScore) {
+                        best = node
+                        bestScore = score
+                    }
+                }
+            }
             for (i in node.childCount - 1 downTo 0) node.getChild(i)?.let { stack.addLast(it) }
         }
-        return null
+        return best
     }
 
     private fun copyToClipboard(text: String) {
