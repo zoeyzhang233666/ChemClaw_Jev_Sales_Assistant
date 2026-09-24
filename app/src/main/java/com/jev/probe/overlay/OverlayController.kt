@@ -489,7 +489,15 @@ class OverlayController(private val ctx: Context) {
         val btns = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
         btns.addView(pill("复制", false) { copy(text) })
         // Fill, then collapse so the input box + keyboard are visible to review/send.
-        btns.addView(pill("填入", true) { android.util.Log.d("JEVASSIST", "overlay: fill tapped"); onFill(text); if (expanded) toggle() })
+        btns.addView(pill("填入", true) {
+            android.util.Log.d("JEVASSIST", "overlay: fill tapped")
+            // Let the chat regain the active window before the accessibility
+            // service looks for its editor. The overlay itself was just touched.
+            val host = root
+            if (expanded) toggle()
+            if (host != null) host.postDelayed({ onFill(text) }, 160L)
+            else onFill(text)
+        })
         c.addView(btns)
         return c
     }
