@@ -1,6 +1,6 @@
 # ChemClaw-Jev 销售助手
 
-**芯化和云内部业务员使用的 AI 销售与商机开发助手。** 以 Jev 判断模型为业务决策核心，帮助业务员从聊天中理解采购商、供应商的实际需求，推进真实询盘、供采匹配与「每日询单」套餐销售。当前为 Android 第一阶段开发版本，**并非已经上线的公司生产系统**。
+**内部业务员使用的 AI 销售与商机开发助手。** 以 Jev 判断模型为业务决策核心，帮助业务员从聊天中理解采购商、供应商的实际需求，推进真实询盘、供采匹配与「每日询单」套餐销售。当前为 Android 第一阶段开发版本，**并非已经上线的公司生产系统**。
 
 > 本仓库 Fork 自 [jev-chat/jev-chat-jarvis](https://github.com/jev-chat/jev-chat-jarvis)。原项目 README 保留在 [docs/upstream-readme.md](docs/upstream-readme.md)，上游版权与许可证见 [LICENSE](LICENSE)。上游原有聊天采集与无障碍实现仍需要在目标手机及聊天 App 版本验收。
 
